@@ -5,6 +5,7 @@
 *.ppm
 *.annot
 *.bin
+*.log
 min-rt
 origin/*.cmi
 origin/*.cmx
