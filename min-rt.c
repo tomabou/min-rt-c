@@ -18,6 +18,19 @@
 #include <string.h>
 #include <math.h>
 
+int count = 0;
+
+void* malloc_catch(size_t size){
+  count += size;
+  printf("%d\n",size);
+  return malloc(size);
+}
+void* calloc_catch(size_t size,int num){
+  count += size*num;
+  printf("%d %d \n",size,num);
+  return calloc(size,num);
+}
+
 typedef struct {
   float x, y, z;
 } vec_t;
@@ -632,7 +645,7 @@ void read_all_object() {
 int *read_net_item(int length) {
   int item = read_int();
   if (item == -1) {
-    int *ary = (int *) malloc(sizeof(int) * (length + 1));
+    int *ary = (int *) malloc_catch(sizeof(int) * (length + 1));
     memset(ary, -1, sizeof(int) * (length + 1));
     return ary;
   }else {
@@ -645,7 +658,7 @@ int *read_net_item(int length) {
 int **read_or_network(int length) {
   int *net = read_net_item(0);
   if (net[0] == -1) {
-    int **ary = (int **) malloc(sizeof(int*) * (length + 1));
+    int **ary = (int **) malloc_catch(sizeof(int*) * (length + 1));
     int i;
     for (i = 0; i < length + 1; ++i) {
       ary[i] = net;
@@ -1017,7 +1030,7 @@ int solver_fast2(int index, dvec_t *dirvec) {
 
 /* 直方体オブジェクトに対する前処理 */
 float* setup_rect_table(vec_t *vec, obj_t *m) {
-  float *consts = (float*)malloc(6 * sizeof(float));
+  float *consts = (float*)malloc_catch(6 * sizeof(float));
 
   if (fiszero(vec->x)) { /* YZ平面 */
     consts[1] = 0.0;
@@ -1044,7 +1057,7 @@ float* setup_rect_table(vec_t *vec, obj_t *m) {
 
 /* 平面オブジェクトに対する前処理 */
 float* setup_surface_table(vec_t *vec, obj_t *m) {
-  float *consts = (float*)malloc(4 * sizeof(float));
+  float *consts = (float*)malloc_catch(4 * sizeof(float));
   float d = vec->x * o_param_a(m) + vec->y * o_param_b(m) + vec->z * o_param_c(m);
   if (fispos(d)) {
     /* 方向ベクトルを何倍すれば平面の垂直方向に 1 進むか */
@@ -1065,7 +1078,7 @@ float* setup_surface_table(vec_t *vec, obj_t *m) {
 
 /* 2次曲面に対する前処理 */
 float* setup_second_table(vec_t *v, obj_t *m) {
-  float *consts = malloc(5 * sizeof(float));
+  float *consts = malloc_catch(5 * sizeof(float));
   float aa = quadratic(m, v->x, v->y, v->z);
   float c1 = fneg(v->x * o_param_a(m));
   float c2 = fneg(v->y * o_param_b(m));
@@ -2056,18 +2069,18 @@ void scan_lines(pixel_t *prev, pixel_t *cur, pixel_t *next, int group_id) {
 /* ピクセルを表すtupleを割り当て */
 void create_pixel(pixel_t *pixel) {
   vecbzero(&pixel->rgb);
-  pixel->isect_ps = calloc(sizeof(vec_t), 5);
-  pixel->sids = calloc(sizeof(int), 5);
-  pixel->cdif = calloc(sizeof(int), 5);
-  pixel->engy = calloc(sizeof(vec_t), 5);
-  pixel->r20p = calloc(sizeof(vec_t), 5);
+  pixel->isect_ps = calloc_catch(sizeof(vec_t), 5);
+  pixel->sids = calloc_catch(sizeof(int), 5);
+  pixel->cdif = calloc_catch(sizeof(int), 5);
+  pixel->engy = calloc_catch(sizeof(vec_t), 5);
+  pixel->r20p = calloc_catch(sizeof(vec_t), 5);
   pixel->gid = 0;
-  pixel->nvectors = calloc(sizeof(vec_t), 5);
+  pixel->nvectors = calloc_catch(sizeof(vec_t), 5);
 }
 
 /* 横方向1ライン分のピクセル配列を作る */
 pixel_t *create_pixelline() {
-  pixel_t *line = calloc(sizeof(pixel_t), image_size[0]);
+  pixel_t *line = calloc_catch(sizeof(pixel_t), image_size[0]);
   int i;
   for (i = 0; i < image_size[0]; ++i) {
     create_pixel(&line[i]);
@@ -2154,7 +2167,7 @@ void calc_dirvec_rows(int row, int group_id, int index) {
 void create_dirvecs(int index) {
 
   while(index >= 0) {
-    dirvecs[index] = calloc(120, sizeof(dvec_t));
+    dirvecs[index] = calloc_catch(120, sizeof(dvec_t));
     --index;
   }
 
@@ -2273,11 +2286,12 @@ int main() {
   int i;
 
   for(i = 0; i < 50; ++i) {
-    and_net[i] = malloc(sizeof(int));
+    and_net[i] = malloc_catch(sizeof(int));
     and_net[i][0] = -1;
   }
 
   rt(128, 128);
+  printf("%d\n", count);
 
   return 0;
 }
